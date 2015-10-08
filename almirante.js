@@ -1,15 +1,46 @@
+/**
+ * Object that holds almirante's functions
+ * @param {Object} commands
+ */
 var commands = {};
 
+/**
+ * Array to manage status queue
+ * @param {Array} queue
+ */
 var queue = [];
+
+/**
+ * Array of admin users
+ * @param {Array} admins
+ */
+var admins = ['cesar.hernandez','miguel.mora','edgar.garcia'];
+
+/**
+ * Parses urls in a string to an array.
+ * @function
+ * @name string2array
+ * @param {string} urls - String with urls
+ */
 var string2array = function(urls){
   var url = urls.split("\n");
   for(var i=0;i< url.length;i++){
+  	//slack sends urls with < and > they should be removed
   	url[i] = url[i].replace(/\</g, '');
   	url[i] = url[i].replace(/\>/g, '');
   }
   return url;
 }
 
+/**
+ * Parses urls to single links and send them every 500 ms, slack channel doesn't support more than 10 send calls without waiting.
+ * @function
+ * @name commands.lista
+ * @memberof commands
+ * @param {object} user - slack user
+ * @param {object} channel - slack channel
+ * @param {string} message - message sent to slackbot
+ */
 commands['lista'] = function(user,channel,message){
 	var urls = string2array(message);
 	if(urls.length<1){
@@ -26,6 +57,15 @@ commands['lista'] = function(user,channel,message){
 	}, 500);
 };
 
+/**
+ * Sends status queue every 500 ms, slack channel doesn't support more than 10 send calls without waiting.
+ * @function
+ * @name commands.queue
+ * @memberof commands
+ * @param {object} user - slack user
+ * @param {object} channel - slack channel
+ * @param {string} message - message sent to slackbot
+ */
 commands['queue'] = function(user,channel,message){
 	if(queue.length<1){
 		channel.send('Queue is empty');
@@ -46,6 +86,15 @@ commands['queue'] = function(user,channel,message){
 	}, 500);
 };
 
+/**
+ * Request status turn.
+ * @function
+ * @name commands.ficha
+ * @memberof commands
+ * @param {object} user - slack user
+ * @param {object} channel - slack channel
+ * @param {string} message - message sent to slackbot
+ */
 commands['ficha'] = function(user,channel,message){
 	if(queue.length<1){
 		//if no one in the queue, assing turn immediately 
@@ -73,20 +122,61 @@ commands['ficha'] = function(user,channel,message){
 	}
 };
 
+/**
+ * Ends status turn
+ * @function
+ * @name commands.next
+ * @memberof commands
+ * @param {object} user - slack user
+ * @param {object} channel - slack channel
+ * @param {string} message - message sent to slackbot
+ */
 commands['next'] = function(user,channel,message){
+	//return if queue is empty
 	if(queue.length<1){
 		channel.send('Queue is empty');
 		return;
 	}
 	var queueUser = String(queue[0].user);
 	if(queueUser === user.name){
-		//TODO: check here for more than 10 minutes
+		//user never called /voy
+		if(!queue[0].start_at){
+			channel.send('Please call /voy before calling /next');
+			return
+		}
+		//check if user took more than 10 minutes to update
 		var now = new Date();
 		var timeDiff = (now.getTime() - queue[0].start_at.getTime())/1000;
-		console.log(timeDiff);
 		if(timeDiff>600){
 			channel.send('Thanks for the donuts '+queueUser+', time updating:'+timeDiff/60);
 		}
+		queue.shift();
+		if(queue.length<1){
+			channel.send('Thanks for updating, queue is empty');
+		}else{
+			queueUser = String(queue[0].user);
+			channel.send(queueUser+' is next in the queue');	
+		}
+	}else{
+		//someone else tried to update
+		channel.send(queueUser+' is updating please wait.');
+	}
+};
+
+/**
+ * performs a pop action to the queue
+ * @function
+ * @name commands.kick
+ * @memberof commands
+ * @param {object} user - slack user
+ * @param {object} channel - slack channel
+ * @param {string} message - message sent to slackbot
+ */
+commands['kick'] = function(user,channel,message){
+	//only admin users should perform this action
+	if(admins.indexOf(String(user.name)) !== -1){
+		var queueUser = String(queue[0].user);
+		channel.send(queueUser+' has been removed for inactivity');
 		queue.shift();
 		if(queue.length<1){
 			channel.send('Queue is empty');
@@ -95,11 +185,21 @@ commands['next'] = function(user,channel,message){
 			channel.send(queueUser+' is next in the queue');	
 		}
 	}else{
-		channel.send(queueUser+' is updating please wait.');
+		channel.send('You are not authorized to perform this action');
 	}
 };
 
+/**
+ * Starts status turn
+ * @function
+ * @name commands.voy
+ * @memberof commands
+ * @param {object} user - slack user
+ * @param {object} channel - slack channel
+ * @param {string} message - message sent to slackbot
+ */
 commands['voy'] = function(user,channel,message){
+	//return if queue is empty
 	if(queue.length<1){
 		channel.send('Queue is empty');
 		return;
@@ -117,6 +217,15 @@ commands['voy'] = function(user,channel,message){
 	}
 };
 
+/**
+ * Sends parking slots from unojaq
+ * @function
+ * @name commands.parking
+ * @memberof commands
+ * @param {object} user - slack user
+ * @param {object} channel - slack channel
+ * @param {string} message - message sent to slackbot
+ */
 commands['parking'] = function(user,channel,message){
 	var url = 'https://api.parse.com/1/classes/Events?include=user&order=startsAt&where={\"endsAt\":{\"$gte\":{\"__type\":\"Date\",\"iso\":\"'+moment().toISOString()+'\"}}}';
 	unirest.get(url)
@@ -127,6 +236,7 @@ commands['parking'] = function(user,channel,message){
 	})
 	.end(function(response){
 		for(var i=0;i<response.body.results.length;i++){
+			//filter results for today only
 			if(moment(response.body.results[i].startsAt.iso).isBefore(moment())){
 				var name = response.body.results[i].user.first_name +' '+response.body.results[i].user.last_name; 
 				channel.send(name);
@@ -135,5 +245,8 @@ commands['parking'] = function(user,channel,message){
 	})
 }
 
-//export commands
+/**
+ * Commands module
+ * @module commands
+ */
 module.exports = commands;

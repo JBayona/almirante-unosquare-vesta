@@ -5,6 +5,7 @@ var unirest = require('unirest');
 var moment = require('moment');
 var commands = require('./almirante.js');
 
+//configure cluster to restart on exit
 if (cluster.isMaster) {
   cluster.fork();
 
@@ -13,6 +14,7 @@ if (cluster.isMaster) {
   });
 }
 
+//configure slack actions in cluster 
 if (cluster.isWorker) {
   var app = express();
 
@@ -38,39 +40,39 @@ if (cluster.isWorker) {
 	
 
 	slack.on('open', function () {
-	    var channels = Object.keys(slack.channels)
-	        .map(function (k) { return slack.channels[k]; })
-	        .filter(function (c) { return c.is_member; })
-	        .map(function (c) { return c.name; });
-	 
-	    var groups = Object.keys(slack.groups)
-	        .map(function (k) { return slack.groups[k]; })
-	        .filter(function (g) { return g.is_open && !g.is_archived; })
-	        .map(function (g) { return g.name; });
-	 
-	    console.log('Welcome to Slack. You are ' + slack.self.name + ' of ' + slack.team.name);
-	 
-	    if (channels.length > 0) {
-	        console.log('You are in: ' + channels.join(', '));
-	    }
-	    else {
-	        console.log('You are not in any channels.');
-	    }
-	 
-	    if (groups.length > 0) {
-	       console.log('As well as: ' + groups.join(', '));
-	    }
+    var channels = Object.keys(slack.channels)
+        .map(function (k) { return slack.channels[k]; })
+        .filter(function (c) { return c.is_member; })
+        .map(function (c) { return c.name; });
+ 
+    var groups = Object.keys(slack.groups)
+        .map(function (k) { return slack.groups[k]; })
+        .filter(function (g) { return g.is_open && !g.is_archived; })
+        .map(function (g) { return g.name; });
+ 
+    console.log('Welcome to Slack. You are ' + slack.self.name + ' of ' + slack.team.name);
+ 
+    if (channels.length > 0) {
+        console.log('You are in: ' + channels.join(', '));
+    }
+    else {
+        console.log('You are not in any channels.');
+    }
+ 
+    if (groups.length > 0) {
+       console.log('As well as: ' + groups.join(', '));
+    }
 	});
 
 	var makeMention = function(userId) {
-	    return '<@' + userId + '>';
+	  return '<@' + userId + '>';
 	};
 
 	var isDirect = function(userId, messageText) {
-	    var userTag = makeMention(userId);
-	    return messageText &&
-	           messageText.length >= userTag.length &&
-	           messageText.substr(0, userTag.length) === userTag;
+    var userTag = makeMention(userId);
+    return messageText &&
+           messageText.length >= userTag.length &&
+           messageText.substr(0, userTag.length) === userTag;
 	};
 
 	slack.on('message', function(message) {
@@ -78,11 +80,11 @@ if (cluster.isWorker) {
     var user = slack.getUserByID(message.user);
 
     if (message.type === 'message' && isDirect(slack.self.id, message.text)) {
-      //console.log(channel.name + ':' + user.name + ':' + message.text);
-      
       var msgtext = String(message.text);
-      msgtext = msgtext.substring(14,msgtext.length);        
+      msgtext = msgtext.substring(14,msgtext.length);     
+      msgtext = msgtext.trim();
 	    if (msgtext.indexOf("/") != 0){
+	    	channel.send('Please enter a valid command, type ##queue to get the full list of available commands')
 	    	console.log('not a command');
 	    	return false;
 	    }
@@ -90,6 +92,7 @@ if (cluster.isWorker) {
 	    var command = msgtext.substring(1, endPos);
 	    if (commands[command] == null){
 	    	console.log('not a valid command');
+	    	channel.send('Please enter a valid command, type ##queue to get the full list of available commands')
 	    	return false;
 	    }
 	    var messageBody = msgtext.indexOf(" ") !== -1 ? msgtext.substring(msgtext.indexOf(" ")+1,msgtext.length) : '';
