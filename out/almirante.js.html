@@ -1,4 +1,32 @@
-/**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: almirante.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: almirante.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
  * Object that holds almirante's functions
  * @namespace
  */
@@ -24,9 +52,9 @@ var admins = ['cesar.hernandez','miguel.mora','edgar.garcia'];
  */
 var string2array = function(urls){
   var url = urls.split("\n");
-  for(var i=0;i< url.length;i++){
-  	//slack sends urls with < and > they should be removed
-  	url[i] = url[i].replace(/\</g, '');
+  for(var i=0;i&lt; url.length;i++){
+  	//slack sends urls with &lt; and > they should be removed
+  	url[i] = url[i].replace(/\&lt;/g, '');
   	url[i] = url[i].replace(/\>/g, '');
   }
   return url;
@@ -43,12 +71,12 @@ var string2array = function(urls){
  */
 commands['lista'] = function(user,channel,message){
 	var urls = string2array(message);
-	if(urls.length<1){
+	if(urls.length&lt;1){
 		return;
 	}
 	var count=0;
 	var interval = setInterval(function() {
-		if(count< urls.length){
+		if(count&lt; urls.length){
 			channel.send(urls[count]);	
 			count++
 		} else{
@@ -67,13 +95,13 @@ commands['lista'] = function(user,channel,message){
  * @param {string} message - message sent to slackbot
  */
 commands['queue'] = function(user,channel,message){
-	if(queue.length<1){
+	if(queue.length&lt;1){
 		channel.send('Queue is empty');
 		return;
 	}
 	var count=0;
 	var interval = setInterval(function() {
-		if(count< queue.length){
+		if(count&lt; queue.length){
 			channel.send(
 				queue[count].user+'\n'+
 				'Requested time:'+queue[count].reqeuested_at+'\n'+
@@ -96,7 +124,7 @@ commands['queue'] = function(user,channel,message){
  * @param {string} message - message sent to slackbot
  */
 commands['ficha'] = function(user,channel,message){
-	if(queue.length<1){
+	if(queue.length&lt;1){
 		//if no one in the queue, assing turn immediately 
 		queue.push({
 			user: String(user.name),
@@ -106,7 +134,7 @@ commands['ficha'] = function(user,channel,message){
 		channel.send('Queue is empty you are free to update in the next 10 minutes, there\'s no need to call /voy');
 	}else{
 		//check if doesn't exist in queue already
-		for (var i=0;i<queue.length;i++) {
+		for (var i=0;i&lt;queue.length;i++) {
 			console.log(queue[i].user);
 		  if (queue[i].user === String(user.name)){
 		    channel.send(user.name+' is in the queue already, call /queue to view the queue');
@@ -133,7 +161,7 @@ commands['ficha'] = function(user,channel,message){
  */
 commands['next'] = function(user,channel,message){
 	//return if queue is empty
-	if(queue.length<1){
+	if(queue.length&lt;1){
 		channel.send('Queue is empty');
 		return;
 	}
@@ -151,7 +179,7 @@ commands['next'] = function(user,channel,message){
 			channel.send('Thanks for the donuts '+queueUser+', time updating:'+timeDiff/60);
 		}
 		queue.shift();
-		if(queue.length<1){
+		if(queue.length&lt;1){
 			channel.send('Thanks for updating, queue is empty');
 		}else{
 			queueUser = String(queue[0].user);
@@ -178,7 +206,7 @@ commands['kick'] = function(user,channel,message){
 		var queueUser = String(queue[0].user);
 		channel.send(queueUser+' has been removed for inactivity');
 		queue.shift();
-		if(queue.length<1){
+		if(queue.length&lt;1){
 			channel.send('Queue is empty');
 		}else{
 			queueUser = String(queue[0].user);
@@ -200,7 +228,7 @@ commands['kick'] = function(user,channel,message){
  */
 commands['voy'] = function(user,channel,message){
 	//return if queue is empty
-	if(queue.length<1){
+	if(queue.length&lt;1){
 		channel.send('Queue is empty');
 		return;
 	}
@@ -227,7 +255,7 @@ commands['voy'] = function(user,channel,message){
  * @param {string} message - message sent to slackbot
  */
 commands['parking'] = function(user,channel,message){
-	var url = 'https://api.parse.com/1/classes/Events?include=user&order=startsAt&where={\"endsAt\":{\"$gte\":{\"__type\":\"Date\",\"iso\":\"'+moment().toISOString()+'\"}}}';
+	var url = 'https://api.parse.com/1/classes/Events?include=user&amp;order=startsAt&amp;where={\"endsAt\":{\"$gte\":{\"__type\":\"Date\",\"iso\":\"'+moment().toISOString()+'\"}}}';
 	unirest.get(url)
 	.headers({
 		'X-Parse-Application-Id': 'HMgEYiz7FYsYo4yymyJzcjkIzBuxo5SZDfKKBAoJ',
@@ -235,7 +263,7 @@ commands['parking'] = function(user,channel,message){
 	  'Content-Type':'application/json'
 	})
 	.end(function(response){
-		for(var i=0;i<response.body.results.length;i++){
+		for(var i=0;i&lt;response.body.results.length;i++){
 			//filter results for today only
 			if(moment(response.body.results[i].startsAt.iso).isBefore(moment())){
 				var name = response.body.results[i].user.first_name +' '+response.body.results[i].user.last_name; 
@@ -250,3 +278,26 @@ commands['parking'] = function(user,channel,message){
  * @module commands
  */
 module.exports = commands;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-commands.html">commands</a></li></ul><h3>Namespaces</h3><ul><li><a href="commands.html">commands</a></li></ul><h3>Global</h3><ul><li><a href="global.html#admins">admins</a></li><li><a href="global.html#queue">queue</a></li><li><a href="global.html#string2array">string2array</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.3</a> on Thu Oct 08 2015 17:52:02 GMT-0500 (Central Daylight Time (Mexico))
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

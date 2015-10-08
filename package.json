@@ -9,6 +9,7 @@
   "dependencies": {
     "ejs": "2.3.3",
     "express": "4.13.3",
+    "jsdoc": "^3.3.3",
     "moment": "^2.10.6",
     "slack-client": "^1.4.1",
     "unirest": "^0.4.2"
