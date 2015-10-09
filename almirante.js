@@ -17,6 +17,18 @@ var queue = [];
 var admins = ['cesar.hernandez','miguel.mora','edgar.garcia'];
 
 /**
+ * Variable holding timeout to kick users if they don't start updating
+ * @param {Object} waitingTimeout
+ */
+var waitingTimeout;
+
+/** 
+ * Timeout in seconds to kick users when they're next in queue
+ * @constant {number} 
+ */
+var TIMEOUT_SECONDS = 180;
+
+/**
  * Parses urls in a string to an array.
  * @function
  * @name string2array
@@ -26,11 +38,35 @@ var string2array = function(urls){
   var url = urls.split("\n");
   for(var i=0;i< url.length;i++){
   	//slack sends urls with < and > they should be removed
-  	url[i] = url[i].replace(/\</g, '');
-  	url[i] = url[i].replace(/\>/g, '');
+  	url[i] = url[i].replace(/</g, '');
+  	url[i] = url[i].replace(/>/g, '');
   }
   return url;
-}
+};
+
+/**
+ * Starts timeout to kick users if they don't start their turn after 3 minutes when someone called /next
+ * @function
+ * @name startWaiting
+ * @param {object} channel - Slack channel to send notification
+ */
+var startWaiting = function(channel){
+  waitingTimeout = setTimeout(function(){
+  	if(queue.length>0){
+  		channel.send('@'+queue[0].user+' has been kicked after 3 minutes of inactivity.');
+  		queue.shift();
+  	}
+  },TIMEOUT_SECONDS*1000);
+};
+
+/**
+ * Ends waiting timeout when user calls /voy
+ * @function
+ * @name stopWaiting
+ */
+var stopWaiting = function(){
+	clearTimeout(waitingTimeout);
+};
 
 /**
  * Parses urls to single links and send them every 500 ms, slack channel doesn't support more than 10 send calls without waiting.
@@ -41,7 +77,7 @@ var string2array = function(urls){
  * @param {object} channel - slack channel
  * @param {string} message - message sent to slackbot
  */
-commands['lista'] = function(user,channel,message){
+commands.lista = function(user,channel,message){
 	var urls = string2array(message);
 	if(urls.length<1){
 		return;
@@ -50,7 +86,7 @@ commands['lista'] = function(user,channel,message){
 	var interval = setInterval(function() {
 		if(count< urls.length){
 			channel.send(urls[count]);	
-			count++
+			count++;
 		} else{
 			clearInterval(interval);
 		}
@@ -66,7 +102,7 @@ commands['lista'] = function(user,channel,message){
  * @param {object} channel - slack channel
  * @param {string} message - message sent to slackbot
  */
-commands['queue'] = function(user,channel,message){
+commands.queue = function(user,channel,message){
 	if(queue.length<1){
 		channel.send('Queue is empty');
 		return;
@@ -79,7 +115,7 @@ commands['queue'] = function(user,channel,message){
 				'Requested time:'+queue[count].reqeuested_at+'\n'+
 				'Start time:'+queue[count].start_at
 				);	
-			count++
+			count++;
 		} else{
 			clearInterval(interval);
 		}
@@ -95,7 +131,7 @@ commands['queue'] = function(user,channel,message){
  * @param {object} channel - slack channel
  * @param {string} message - message sent to slackbot
  */
-commands['ficha'] = function(user,channel,message){
+commands.ficha = function(user,channel,message){
 	if(queue.length<1){
 		//if no one in the queue, assing turn immediately 
 		queue.push({
@@ -131,7 +167,7 @@ commands['ficha'] = function(user,channel,message){
  * @param {object} channel - slack channel
  * @param {string} message - message sent to slackbot
  */
-commands['next'] = function(user,channel,message){
+commands.next = function(user,channel,message){
 	//return if queue is empty
 	if(queue.length<1){
 		channel.send('Queue is empty');
@@ -142,7 +178,7 @@ commands['next'] = function(user,channel,message){
 		//user never called /voy
 		if(!queue[0].start_at){
 			channel.send('Please call /voy before calling /next');
-			return
+			return;
 		}
 		//check if user took more than 10 minutes to update
 		var now = new Date();
@@ -155,7 +191,9 @@ commands['next'] = function(user,channel,message){
 			channel.send('Thanks for updating, queue is empty');
 		}else{
 			queueUser = String(queue[0].user);
-			channel.send(queueUser+' is next in the queue');	
+			channel.send('@'+queueUser+' is next in the queue and has 3 minutes to start updating.');	
+			//start waiting 3 minutes for user to get its turn.
+			startWaiting(channel);
 		}
 	}else{
 		//someone else tried to update
@@ -172,7 +210,7 @@ commands['next'] = function(user,channel,message){
  * @param {object} channel - slack channel
  * @param {string} message - message sent to slackbot
  */
-commands['kick'] = function(user,channel,message){
+commands.kick = function(user,channel,message){
 	//only admin users should perform this action
 	if(admins.indexOf(String(user.name)) !== -1){
 		var queueUser = String(queue[0].user);
@@ -198,7 +236,7 @@ commands['kick'] = function(user,channel,message){
  * @param {object} channel - slack channel
  * @param {string} message - message sent to slackbot
  */
-commands['voy'] = function(user,channel,message){
+commands.voy = function(user,channel,message){
 	//return if queue is empty
 	if(queue.length<1){
 		channel.send('Queue is empty');
@@ -210,6 +248,7 @@ commands['voy'] = function(user,channel,message){
 			channel.send('You requested a turn already, your time started at:'+queue[0].start_at);	
 			return;
 		}
+		stopWaiting();
 		channel.send('You have 10 minutes to update');
 		queue[0].start_at = new Date();
 	}else{
@@ -226,7 +265,7 @@ commands['voy'] = function(user,channel,message){
  * @param {object} channel - slack channel
  * @param {string} message - message sent to slackbot
  */
-commands['parking'] = function(user,channel,message){
+commands.parking = function(user,channel,message){
 	var url = 'https://api.parse.com/1/classes/Events?include=user&order=startsAt&where={\"endsAt\":{\"$gte\":{\"__type\":\"Date\",\"iso\":\"'+moment().toISOString()+'\"}}}';
 	unirest.get(url)
 	.headers({
@@ -242,8 +281,8 @@ commands['parking'] = function(user,channel,message){
 				channel.send(name);
 			}
 		}
-	})
-}
+	});
+};
 
 /**
  * Commands module
