@@ -83,7 +83,7 @@ if (cluster.isWorker) {
       var msgtext = String(message.text);
       msgtext = msgtext.substring(14,msgtext.length);     
       msgtext = msgtext.trim();
-	    if (msgtext.indexOf("/") != 0){
+	    if (msgtext.indexOf("/") != -1){
 	    	channel.send('Please enter a valid command, type ##queue to get the full list of available commands')
 	    	console.log('not a command');
 	    	return false;
