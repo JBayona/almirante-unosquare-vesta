@@ -35,7 +35,7 @@ if (cluster.isWorker) {
 	});
 
 	 
-	var token = 'xoxb-11553187460-5btAgwM0Slpl5Nx1CARHUQII';
+	var token = 'xoxb-18219514657-BKShe17iR4EAAf2vYx8ndL7g';
 	var slack = new Slack(token, true, true);
 	
 
