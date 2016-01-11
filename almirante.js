@@ -90,7 +90,7 @@ commands.lista = function(user,channel,message){
 		} else{
 			clearInterval(interval);
 		}
-	}, 500);
+	}, 1000);
 };
 
 /**
