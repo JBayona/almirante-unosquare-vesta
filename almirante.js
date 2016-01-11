@@ -1,5 +1,5 @@
 /**
- * Object that holds almirante's functions
+ * Object that holds almirante's functions and behaviours
  * @namespace
  */
 var commands = {};
