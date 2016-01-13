@@ -286,7 +286,7 @@ commands.parking = function(user,channel,message){
 		for(var i=0;i<results.length;i++){
 			//filter results for today only
 			var currentUser = results[i].user;
-			name = currentUser.first_name+' '+currentUser.last_name;
+			var name = currentUser.first_name+' '+currentUser.last_name;
 			channel.send(name);
 		}
 	});
