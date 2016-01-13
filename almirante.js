@@ -1,3 +1,5 @@
+var unirest = require('unirest');
+var moment = require('moment');
 /**
  * Object that holds almirante's functions and behaviours
  * @namespace
@@ -266,20 +268,26 @@ commands.voy = function(user,channel,message){
  * @param {string} message - message sent to slackbot
  */
 commands.parking = function(user,channel,message){
-	var url = 'https://api.parse.com/1/classes/Events?include=user&order=startsAt&where={\"endsAt\":{\"$gte\":{\"__type\":\"Date\",\"iso\":\"'+moment().toISOString()+'\"}}}';
+	var date = moment().add('days',1);
+	var month = check.format('MM');
+	var day   = check.format('DD');
+	var year  = check.format('YYYY');
+	var fromDate = moment(year+"-"+month+"-"+day+"T00:00:00").utc().toISOString();
+	var toDate = moment(year+"-"+month+"-"+day+"T23:59:00").utc().toISOString();
+	var url = 'https://api.parse.com/1/classes/Events?include=user&order=startsAt&where={"startsAt":{"$gte":{"__type":"Date","iso":"'+fromDate+'"}},"endsAt":{"$lte":{"__type":"Date","iso":"'+toDate+'"}}}';
 	unirest.get(url)
 	.headers({
 		'X-Parse-Application-Id': 'HMgEYiz7FYsYo4yymyJzcjkIzBuxo5SZDfKKBAoJ',
 		'X-Parse-REST-API-Key': 'N9aoa2aWcwYWmNjKNc0DuTHALh28YHzVf2C8S4QW',
-	  'Content-Type':'application/json'
+		'Content-Type':'application/json'
 	})
 	.end(function(response){
-		for(var i=0;i<response.body.results.length;i++){
+		var results = response.body.results;
+		for(var i=0;i<results.length;i++){
 			//filter results for today only
-			if(moment(response.body.results[i].startsAt.iso).isBefore(moment())){
-				var name = response.body.results[i].user.first_name +' '+response.body.results[i].user.last_name; 
-				channel.send(name);
-			}
+			var currentUser = results[i].user;
+			name = currentUser.first_name+' '+currentUser.last_name;
+			channel.send(name);
 		}
 	});
 };
