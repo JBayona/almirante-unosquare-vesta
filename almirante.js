@@ -282,11 +282,14 @@ commands.parking = function(user,channel,message){
 		'Content-Type':'application/json'
 	})
 	.end(function(response){
+		console.log('Success call and getting values');
 		var results = response.body.results;
 		for(var i=0;i<results.length;i++){
 			//filter results for today only
+
 			var currentUser = results[i].user;
 			var name = currentUser.first_name+' '+currentUser.last_name;
+			console.log('USer'+name);
 			channel.send(name);
 		}
 	});
