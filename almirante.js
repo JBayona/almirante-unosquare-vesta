@@ -290,10 +290,9 @@ commands.parking = function(user,channel,message){
         console.log('Success call and getting values');
         var results = response.body.results;
         if(results.length){
-            channel.send('@channel ESTACIONAMIENTO PARA MAÑANA:');
+            channel.send('@channel Estacionamiento para mañana:');
         }
         for(var i=0;i<results.length;i++){
-            //filter results for today only
             var currentUser = results[i].user;
             var name = currentUser.first_name+' '+currentUser.last_name;
             channel.send(name);
