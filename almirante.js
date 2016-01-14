@@ -290,7 +290,7 @@ commands.parking = function(user,channel,message){
         console.log('Success call and getting values');
         var results = response.body.results;
         if(results.length){
-            channel.send('@channel: ESTACIONAMIENTO PARA MAÑANA:');
+            channel.send('@channel ESTACIONAMIENTO PARA MAÑANA:');
         }
         for(var i=0;i<results.length;i++){
             //filter results for today only
