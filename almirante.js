@@ -269,7 +269,7 @@ commands.voy = function(user,channel,message){
  */
 commands.parking = function(user,channel,message){
 	console.log('using parking dude');
-	var date = moment().add(1,'days');
+	var date = moment();
 	var month = date.format('MM');
 	var day   = date.format('DD');
 	var year  = date.format('YYYY');
