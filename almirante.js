@@ -280,7 +280,6 @@ commands.parking = function(user,channel,message){
     year  = today.format('YYYY');
     var toDate = moment(year+"-"+month+"-"+day+"T00:01:00").utc().toISOString();
     var url = 'https://api.parse.com/1/classes/Events?include=user&order=startsAt&where={"startsAt":{"$gte":{"__type":"Date","iso":"'+fromDate+'"}},"endsAt":{"$lte":{"__type":"Date","iso":"'+toDate+'"}}}';
-    console.log(url);
     unirest.get(url)
     .headers({
         'X-Parse-Application-Id': 'HMgEYiz7FYsYo4yymyJzcjkIzBuxo5SZDfKKBAoJ',
@@ -290,13 +289,13 @@ commands.parking = function(user,channel,message){
     .end(function(response){
         console.log('Success call and getting values');
         var results = response.body.results;
-        console.log(results);
+        if(results.length){
+            channel.send('@channel: ESTACIONAMIENTO PARA MAÑANA:');
+        }
         for(var i=0;i<results.length;i++){
             //filter results for today only
-
             var currentUser = results[i].user;
             var name = currentUser.first_name+' '+currentUser.last_name;
-            console.log('USer'+name);
             channel.send(name);
         }
     });
