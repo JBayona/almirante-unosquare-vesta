@@ -268,7 +268,8 @@ commands.voy = function(user,channel,message){
  * @param {string} message - message sent to slackbot
  */
 commands.parking = function(user,channel,message){
-	var date = moment().add('days',1);
+	console.log('using parking dude');
+	var date = moment().add(1,'days');
 	var month = date.format('MM');
 	var day   = date.format('DD');
 	var year  = date.format('YYYY');
