@@ -285,6 +285,7 @@ commands.parking = function(user,channel,message){
 	.end(function(response){
 		console.log('Success call and getting values');
 		var results = response.body.results;
+		console.log(results);
 		for(var i=0;i<results.length;i++){
 			//filter results for today only
 
