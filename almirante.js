@@ -275,7 +275,10 @@ commands.parking = function(user,channel,message){
 	var year  = date.format('YYYY');
 	var fromDate = moment(year+"-"+month+"-"+day+"T00:00:00").utc().toISOString();
 	var toDate = moment(year+"-"+month+"-"+day+"T23:59:00").utc().toISOString();
+	console.log(fromDate);
+	console.log(toDate);
 	var url = 'https://api.parse.com/1/classes/Events?include=user&order=startsAt&where={"startsAt":{"$gte":{"__type":"Date","iso":"'+fromDate+'"}},"endsAt":{"$lte":{"__type":"Date","iso":"'+toDate+'"}}}';
+	console.log(url);
 	unirest.get(url)
 	.headers({
 		'X-Parse-Application-Id': 'HMgEYiz7FYsYo4yymyJzcjkIzBuxo5SZDfKKBAoJ',
